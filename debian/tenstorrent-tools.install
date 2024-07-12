@@ -1,5 +1,5 @@
 hugepages-setup.sh /opt/tenstorrent/bin
-tenstorrent-hugepages.service /lib/systemd/system/
-dev-hugepages\\x2d1G.mount /lib/systemd/system/
+debian/tenstorrent-hugepages.service /lib/systemd/system/
+debian/dev-hugepages\\x2d1G.mount /lib/systemd/system/
 debian/tenstorrent-tools.postinst usr/sbin
 
