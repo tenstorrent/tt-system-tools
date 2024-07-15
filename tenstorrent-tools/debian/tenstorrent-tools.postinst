@@ -1,0 +1,21 @@
+#!/bin/sh
+
+set -e
+
+# Custom kernel parameters to be added
+CUSTOM_KERNEL_PARAMETERS="iommu=pt"
+
+# Get the current value of GRUB_CMDLINE_LINUX_DEFAULT
+GRUB_CMDLINE_LINUX_DEFAULT="$(. /etc/default/grub ; echo $GRUB_CMDLINE_LINUX_DEFAULT)"
+
+# Check if the custom parameters are already present in the GRUB_CMDLINE_LINUX_DEFAULT
+if echo "$GRUB_CMDLINE_LINUX_DEFAULT" | grep -qw "$CUSTOM_KERNEL_PARAMETERS"; then
+  echo "Custom kernel parameters already set."
+else
+  # Append the custom parameters to the existing GRUB_CMDLINE_LINUX_DEFAULT
+  NEW_GRUB_CMDLINE_LINUX_DEFAULT="$GRUB_CMDLINE_LINUX_DEFAULT $CUSTOM_KERNEL_PARAMETERS"
+  sed -i "s/^GRUB_CMDLINE_LINUX_DEFAULT=.*/GRUB_CMDLINE_LINUX_DEFAULT=\"$NEW_GRUB_CMDLINE_LINUX_DEFAULT\"/" /etc/default/grub
+  # Update GRUB configuration
+  update-grub
+fi
+

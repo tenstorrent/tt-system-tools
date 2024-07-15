@@ -1,0 +1,24 @@
+# Debian packaging build files
+*.debhelper
+*.debhelper.log
+*/debian/files
+*/debian/*.substvars
+*/debian/*.debhelper
+*/debian/*.debhelper.log
+*/debian/*.log
+*/debian/*.gz
+*/debian/*.xz
+*/debian/*.ddeb
+*/debian/*.udeb
+*/debian/*.changes
+*/debian/debhelper-build-stamp
+*/debian/tmp
+*/debian/*~
+
+# Build artifacts
+*.deb
+*.build
+*.buildinfo
+*.changes
+*.tar.*
+*.dsc

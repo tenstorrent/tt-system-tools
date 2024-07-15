@@ -1,0 +1,11 @@
+Source: tenstorrent-tools
+Section: misc
+Priority: optional
+Maintainer: nobody@tenstorrent.com
+Build-Depends: debhelper (>= 12), sed
+
+Package: tenstorrent-tools
+Architecture: all
+Depends: ${misc:Depends}, pciutils
+Description: Package containing setup scripts for Tenstorrent hardware
+

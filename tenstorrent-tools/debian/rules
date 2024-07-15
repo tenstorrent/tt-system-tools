@@ -1,0 +1,13 @@
+#!/usr/bin/make -f
+
+%:
+	dh $@
+
+override_dh_fixperms:
+	dh_fixperms
+	# Set permissions for /opt/tenstorrent/bin/hugepages-setup.sh
+	chmod 755 debian/tenstorrent-tools/opt/tenstorrent/bin/hugepages-setup.sh
+
+override_dh_installsystemd:
+	dh_installsystemd --name=tenstorrent-hugepages.service
+	dh_installsystemd --name=dev-hugepages\x2d1G.mount

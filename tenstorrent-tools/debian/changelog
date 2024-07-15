@@ -1,0 +1,35 @@
+tenstorrent-tools (1.1-4) UNRELEASED; urgency=medium
+  * Add Blackhole support
+
+ -- Tavis Wilson <twilson@tenstorrent.com>  Tue, 2 Jul 2024 15:52:56 -0700
+
+tenstorrent-tools (1.1-3) UNRELEASED; urgency=medium
+  * Add hugepages override file
+
+ -- Tavis Wilson <twilson@tenstorrent.com>  Thu, 27 Jun 2024 15:52:56 -0700
+
+tenstorrent-tools (1.1-2) UNRELEASED; urgency=medium
+  * Fixed postinst grub config script
+
+ -- Olof Johansson <olofj@tenstorrent.com>  Sun, 17 Sep 2023 23:52:01 -0700
+
+tenstorrent-tools (1.1-1) UNRELEASED; urgency=medium
+  * Deal with non-NUMA systems (all being node 0)
+  * Better error messages
+  * Error out if the increased nr_hugepages didn't stick
+
+ -- Olof Johansson <olofj@tenstorrent.com>  Sun, 17 Sep 2023 22:12:42 -0700
+
+tenstorrent-tools (1.0-1.2) UNRELEASED; urgency=medium
+
+  *  Trying uprev.
+  *  One more version uprev after packaging fixes
+  *  Command line updates as part of postinst
+
+ -- Olof Johansson <olofj@tenstorrent.com>  Wed, 26 Jul 2023 00:50:18 -0700
+
+tenstorrent-tools (1.0-1) UNRELEASED; urgency=medium
+
+  * Initial release.
+
+ -- Nobody <nobody@tenstorrent.com>  Sat, 25 Jul 2023 12:00:00 +0000 

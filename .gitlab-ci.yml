@@ -1,0 +1,21 @@
+stages:
+  - build
+
+variables:
+  PACKAGE_NAME: tenstorrent-tools
+  DEBIAN_DIR: debian
+  SOURCE_DIR: tenstorrent-tools
+
+build:
+  stage: build
+  tags: 
+    - 8-core
+  image: ubuntu:20.04
+  script:
+    - apt-get update
+    - DEBIAN_FRONTEND=noninteractive apt-get -y install build-essential debhelper
+    - cd $SOURCE_DIR
+    - dpkg-buildpackage -us -uc
+  artifacts:
+    paths:
+      - $DEBIAN_DIR/../${PACKAGE_NAME}_*.deb

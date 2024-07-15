@@ -1,0 +1,15 @@
+[Unit]
+Description=Mount hugepages at /dev/hugepages-1G
+DefaultDependencies=no
+Before=sysinit.target
+ConditionPathExists=/sys/kernel/mm/hugepages/hugepages-1048576kB
+ConditionCapability=CAP_SYS_ADMIN
+
+[Mount]
+What=hugetlbfs
+Where=/dev/hugepages-1G
+Type=hugetlbfs
+Options=pagesize=1G,mode=0777,nosuid,nodev
+
+[Install]
+WantedBy=sysinit.target
