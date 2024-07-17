@@ -1,0 +1,16 @@
+name: Build Release debian package - Manual Trigger
+run-name: Build Release debian package - Manual Trigger
+on:
+  workflow_dispatch:
+
+jobs:
+  builddeb:
+    runs-on: ubuntu-latest
+    steps:
+      - run: sudo apt install -y git-buildpackage debhelper
+      - uses: actions/checkout@v4
+        with:
+          fetch-tags: true
+      - run: git tag
+      - run: gbp buildpackage --git-ignore-branch
+
