@@ -1,0 +1,16 @@
+Source: tenstorrent-tools
+Section: misc
+Priority: optional
+Maintainer: No set person <nobody@tenstorrent.com>
+Build-Depends: debhelper (>= 12)
+Standards-Version: 1.1.0
+
+Package: tenstorrent-tools
+Architecture: all
+Depends: ${misc:Depends}, pciutils
+Description: Package containing setup scripts for Tenstorrent hardware
+ This specifically has any setup scripts, including systemd loading helpers,
+ for the system to use to help get the cards up and running.
+ This inludes: hugepages setup.
+
+

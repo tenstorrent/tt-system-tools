@@ -1,3 +1,8 @@
+tenstorrent-tools (1.1-5) UNRELEASED; urgency=medium
+  * Cleanups relating to text in the repository
+
+ -- John 'Warthog9' Hawley <jhawley@tenstorrent.com>  Tue, 16 Jul 2024 07:07:40 -0700
+
 tenstorrent-tools (1.1-4) UNRELEASED; urgency=medium
   * Add Blackhole support
 

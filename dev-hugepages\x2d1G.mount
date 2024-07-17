@@ -1,5 +1,5 @@
 [Unit]
-Description=Mount hugepages at /dev/hugepages-1G
+Description=Mount hugepages at /dev/hugepages-1G for Tenstorrent ASICs
 DefaultDependencies=no
 Before=sysinit.target
 ConditionPathExists=/sys/kernel/mm/hugepages/hugepages-1048576kB

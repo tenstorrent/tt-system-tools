@@ -1,0 +1,3 @@
+tenstorrent-tools: dir-or-file-in-opt opt/tenstorrent/
+tenstorrent-tools: dir-or-file-in-opt opt/tenstorrent/bin/
+tenstorrent-tools: dir-or-file-in-opt opt/tenstorrent/bin/hugepages-setup.sh

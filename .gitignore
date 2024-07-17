@@ -22,3 +22,9 @@
 *.changes
 *.tar.*
 *.dsc
+
+# artifacts from gbp
+debian/debhelper-build-stamp
+debian/files
+debian/tenstorrent-tools.substvars
+debian/tenstorrent-tools/

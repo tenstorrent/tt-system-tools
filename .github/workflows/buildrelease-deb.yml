@@ -1,0 +1,13 @@
+name: Build Release debian package
+run-name: Build Release debian package
+on:
+  push:
+    tags: [ 'upstream/*' ]
+
+jobs:
+  builddeb:
+    runs-on: ubuntu-latest
+    steps:
+      - run: sudo apt install -y git-buildpackage
+      - run: gbp buildpackage
+
