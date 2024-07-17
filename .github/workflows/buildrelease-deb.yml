@@ -3,6 +3,7 @@ run-name: Build Release debian package
 on:
   push:
     tags: [ 'upstream/*' ]
+  workflow_dispatch:
 
 jobs:
   builddeb:
