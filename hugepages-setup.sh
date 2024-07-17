@@ -6,10 +6,10 @@
 # For every Wormhole we allocate a full 4x1G pages, maximize the
 # aperture between device and host.
 
-TT_VID=0x1e52
-GS_PID=0xfaca
-WH_PID=0x401e
-BH_PID=0xb140
+TT_VID=1e52
+GS_PID=faca
+WH_PID=401e
+BH_PID=b140
 
 # Two arguments: VIDPID to lspci, and multiplier per card found.
 # Returns: <node> <pages>, one per line per card
