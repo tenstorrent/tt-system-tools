@@ -11,4 +11,23 @@ jobs:
       - run: sudo apt install -y git-buildpackage debhelper
       - uses: actions/checkout@v4
       - run: gbp buildpackage --git-ignore-branch
+      - name: release
+        uses: actions/create-release@v1
+        id: create_release
+        with:
+          draft: false
+          prerelease: false
+          release_name: ${{ github.ref_name }}
+          tag_name: ${{ github.ref }}
+          #body_path: CHANGELOG.md
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+      - run: ls -lah ../
+      - run: ls -lah ../*.deb
+      - run: cd ../ && ls -lah
+      - run: cd ../ && ls -lah *.deb
+      - name: upload debian package
+        run: gh release upload ${{ github.ref_name }} ../*.deb
+        env:
+          GITHUB_TOKEN: ${{ github.TOKEN }}
 
