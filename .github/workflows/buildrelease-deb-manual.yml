@@ -14,4 +14,13 @@ jobs:
           fetch-depth: 0
       - run: git tag
       - run: gbp buildpackage --git-ignore-branch
-
+      - name: Move Debian packages
+        run: mkdir -p artifacts && mv ../*.deb artifacts/
+      - name: Set environment variable for deb filename
+        id: deb_filename
+        run: echo "DEB_FILENAME=$(basename artifacts/*.deb)" >> $GITHUB_ENV
+      - name: Upload Debian package
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ env.DEB_FILENAME }}
+          path: artifacts/*.deb
