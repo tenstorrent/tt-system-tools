@@ -1,3 +1,8 @@
+tenstorrent-tools (1.1-6) UNRELEASED; urgency=medium
+  * Fix usage of lspci -d arguments
+
+ -- Olof Johansson <olofj@tenstorrent.com>  Wed, 17 Jul 2024 13:53:38 -0700
+
 tenstorrent-tools (1.1-5) UNRELEASED; urgency=medium
   * Cleanups relating to text in the repository
 
