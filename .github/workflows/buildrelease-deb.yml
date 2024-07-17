@@ -9,6 +9,7 @@ jobs:
   builddeb:
     runs-on: ubuntu-latest
     steps:
-      - run: sudo apt install -y git-buildpackage
-      - run: gbp buildpackage
+      - run: sudo apt install -y git-buildpackage debhelper
+      - uses: actions/checkout@v4
+      - run: gbp buildpackage --git-ignore-branch
 
