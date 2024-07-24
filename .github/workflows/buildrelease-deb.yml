@@ -8,9 +8,14 @@ jobs:
   builddeb:
     runs-on: ubuntu-latest
     steps:
-      - run: sudo apt install -y git-buildpackage debhelper
+      - run: sudo apt update
+      - run: sudo apt install -y git-buildpackage debhelper build-essential
       - uses: actions/checkout@v4
-      - run: gbp buildpackage --git-ignore-branch --git-tag --git-upstream-tag='v%(version)s'
+        with:
+          fetch-tags: true
+          fetch-depth: 0
+      - run: git tag
+      - run: gbp buildpackage --git-tag --git-upstream-tag='v%(version)s'
       - name: release
         uses: actions/create-release@v1
         id: create_release
