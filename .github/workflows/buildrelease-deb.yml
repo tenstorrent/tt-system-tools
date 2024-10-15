@@ -15,7 +15,10 @@ jobs:
           fetch-tags: true
           fetch-depth: 0
       - run: git tag
-      - run: gbp buildpackage --git-tag --git-upstream-tag='v%(version)s'
+      - run: |
+             cp tenstorrent-hugepages.service dev-hugepages\\x2d1G.mount debian/
+             gbp buildpackage --git-tag --git-upstream-tag='v%(version)s'
+             rm debian/tenstorrent-hugepages.service debian/dev-hugepages\\x2d1G.mount
       - name: release
         uses: actions/create-release@v1
         id: create_release

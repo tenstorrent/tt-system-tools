@@ -28,3 +28,7 @@ debian/debhelper-build-stamp
 debian/files
 debian/tenstorrent-tools.substvars
 debian/tenstorrent-tools/
+
+# systemd service files copied for building
+debian/tenstorrent-hugepages.service
+debian/dev-hugepages\\x2d1G.mount

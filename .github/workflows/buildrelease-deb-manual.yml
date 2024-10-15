@@ -14,7 +14,10 @@ jobs:
           fetch-tags: true
           fetch-depth: 0
       - run: git tag
-      - run: gbp buildpackage --git-ignore-branch
+      - run: |
+             cp tenstorrent-hugepages.service dev-hugepages\\x2d1G.mount debian/
+             gbp buildpackage --git-ignore-branch
+             rm debian/tenstorrent-hugepages.service debian/dev-hugepages\\x2d1G.mount
       - name: Move Debian packages
         run: mkdir -p artifacts && mv ../*.deb artifacts/
       - name: Set environment variable for deb filename
