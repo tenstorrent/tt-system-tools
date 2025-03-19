@@ -37,11 +37,11 @@ install -m 644 %{SOURCE1} %{buildroot}%{_unitdir}/
 install -m 644 %{SOURCE2} %{buildroot}%{_unitdir}/dev-hugepages\\x2d1G.mount
 
 # Create post-install script
-cat > %{buildroot}%{_sbindir}/tenstorrent-tools.post <<EOF
+cat > %{buildroot}%{_sbindir}/tenstorrent-tools.post <<'EOF'
 #!/bin/bash
 systemctl daemon-reload
-systemctl enable tenstorrent-hugepages.service
-systemctl enable dev-hugepages\\x2d1G.mount
+systemctl enable --now tenstorrent-hugepages.service
+systemctl enable --now "dev-hugepages\\x2d1G.mount"
 EOF
 chmod 755 %{buildroot}%{_sbindir}/tenstorrent-tools.post
 
