@@ -1,0 +1,83 @@
+name: Build Release Packages
+run-name: Build Release Packages
+on:
+  push:
+    tags: [ 'upstream/v*' ]
+
+jobs:
+  buildrpm:
+    runs-on: ubuntu-latest
+    steps:
+      - run: sudo apt-get update && sudo apt-get install -y rpm
+      - uses: actions/checkout@v4
+        with:
+          fetch-tags: true
+          fetch-depth: 0
+      - name: Set up RPM build environment
+        run: |
+          mkdir -p ~/rpmbuild/{BUILD,BUILDROOT,RPMS,SOURCES,SPECS,SRPMS}
+          cp tenstorrent-tools.spec ~/rpmbuild/SPECS/
+          cp dev-hugepages\\x2d1G.mount hugepages-setup.sh tenstorrent-hugepages.service \
+            ~/rpmbuild/SOURCES  
+          ln -sf ~/rpmbuild/SOURCES/"dev-hugepages\x2d1G.mount" ~/rpmbuild/SOURCES/tt-hugepages-mount
+          echo "%_unitdir /usr/lib/systemd/system" > ~/.rpmmacros
+          version=$(echo ${{ github.ref_name }} | sed 's/^v//')
+          sed -i "s/Version:.*/Version:        ${version}/" ~/rpmbuild/SPECS/tenstorrent-tools.spec
+      - name: Upload RPM artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: rpm-package
+          path: ~/rpmbuild/RPMS/noarch/tenstorrent-tools-*.rpm
+          retention-days: 1
+
+  builddeb:
+    runs-on: ubuntu-latest
+    steps:
+      - run: sudo apt update
+      - run: sudo apt install -y git-buildpackage debhelper build-essential
+      - uses: actions/checkout@v4
+        with:
+          fetch-tags: true
+          fetch-depth: 0
+      - run: |
+          gbp buildpackage --git-ignore-branch --git-upstream-tag='v%(version)s'
+      - name: Upload DEB artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: deb-package
+          path: ../*.deb
+          retention-days: 1
+
+  create_release:
+    needs: [buildrpm, builddeb]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        with:
+          draft: false
+          prerelease: false
+          release_name: ${{ github.ref_name }}
+          tag_name: ${{ github.ref_name }}
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+      
+      - name: Download RPM artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: rpm-package
+          path: ./packages/rpm
+      
+      - name: Download DEB artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: deb-package
+          path: ./packages/deb
+      
+      - name: Upload packages to release
+        run: |
+          find ./packages -type f -name "*.rpm" -o -name "*.deb" | xargs -I{} gh release upload ${{ github.ref_name }} {}
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
