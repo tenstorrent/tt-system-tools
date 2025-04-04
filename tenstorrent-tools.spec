@@ -55,6 +55,8 @@ chmod 755 %{buildroot}%{_sbindir}/tenstorrent-tools.post
 %{_sbindir}/tenstorrent-tools.post
 
 %changelog
+* Fri Apr 4  2025 June Knauth <jknauth@tenstorrent.com> - 1.2.0-1
+- Bump to version 1.2
 * Tue Mar 18 2025 June Knauth <jknauth@tenstorrent.com> - 1.1.0-1
 - Fix sourcing and work around special characters
 * Fri Mar 14 2025 June Knauth <jknauth@tenstorrent.com> - 1.1.0-1
