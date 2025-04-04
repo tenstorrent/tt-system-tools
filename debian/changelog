@@ -1,3 +1,8 @@
+tenstorrent-tools (1.2-1) UNRELEASED; urgency=medium
+  * Add RPM build and update GitHub Actions
+
+ -- June Knauth <jknauth@tenstorrent.com>  Fri, 4 Apr 2025 16:45:00 -0400
+
 tenstorrent-tools (1.1-6) UNRELEASED; urgency=medium
   * Fix usage of lspci -d arguments
 
