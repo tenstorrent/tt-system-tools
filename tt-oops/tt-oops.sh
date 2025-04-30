@@ -29,8 +29,6 @@ NC='\033[0m' # No Color
 log_debug() {
 	if [[ "$LOG_LEVEL" == "debug" ]]; then
 		echo -e "${BLUE}[DEBUG] $*${NC}" >&2
-	else
-		echo -e "${BLUE}[DEBUG] $*${NC}" >/dev/null
 	fi
 }
 
@@ -61,22 +59,17 @@ run_command() {
 	local output_file="$2"
 	local description="$3"
 
-	# Always show what command is being run, regardless of log level
-	log_debug "Running command: $cmd > $output_file"
-
 	# Ensure the directory exists
 	mkdir -p "$(dirname "$output_file")"
 
 	if bash -c "$cmd" >"$output_file" 2>&1; then
-		# Always show success message, don't use log_debug
 		log_debug "Successfully collected $description"
-		return 0
 	else
 		# Always show failure message, don't use log_warn
-		log_debug "Failed to collect $description"
-		log_debug "Command failed: $cmd" >"$output_file"
-		return 1
+		log_warn "Failed to collect $description"
+		echo "Command failed: $cmd" >"$output_file"
 	fi
+	return 0
 }
 
 # Check for required privileges
