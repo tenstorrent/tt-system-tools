@@ -9,11 +9,12 @@ License:        Apache-2.0
 BuildArch:      noarch
 Requires:       pciutils
 
-Source0:        hugepages-setup.sh
-Source1:        tenstorrent-hugepages.service
+Source0:        hugepages-setup/hugepages-setup.sh
+Source1:        hugepages-setup/tenstorrent-hugepages.service
 # This is actually 'dev-hugepages\x2d1G.mount`, but it's symlinked here
 # to get around rpmbuild's inability to handle backslashes in filenames.
-Source2:        tt-hugepages-mount
+Source2:        hugepages-setup/tt-hugepages-mount
+Source3:        tt-oops/tt-oops.sh
 
 %description
 This package contains setup scripts for Tenstorrent hardware.
@@ -32,9 +33,13 @@ mkdir -p %{buildroot}/opt/tenstorrent/bin
 mkdir -p %{buildroot}%{_unitdir}
 mkdir -p %{buildroot}%{_sbindir}
 
+# Install hugepages setup files
 install -m 755 %{SOURCE0} %{buildroot}/opt/tenstorrent/bin/
 install -m 644 %{SOURCE1} %{buildroot}%{_unitdir}/
 install -m 644 %{SOURCE2} %{buildroot}%{_unitdir}/dev-hugepages\\x2d1G.mount
+
+# Install tt-oops script
+install -m 755 %{SOURCE3} %{buildroot}/opt/tenstorrent/bin/tt-oops
 
 # Create post-install script
 cat > %{buildroot}%{_sbindir}/tenstorrent-tools.post <<'EOF'
@@ -50,11 +55,16 @@ chmod 755 %{buildroot}%{_sbindir}/tenstorrent-tools.post
 
 %files
 /opt/tenstorrent/bin/hugepages-setup.sh
+/opt/tenstorrent/bin/tt-oops
 %{_unitdir}/tenstorrent-hugepages.service
 %{_unitdir}/dev-hugepages\x2d1G.mount
 %{_sbindir}/tenstorrent-tools.post
 
 %changelog
+* Tue Apr 30 2025 Olof Johansson <olofj@tenstorrent.com> - 1.3.0-1
+- Refactor repository structure
+- Add tt-oops system diagnostic tool
+
 * Fri Apr 4  2025 June Knauth <jknauth@tenstorrent.com> - 1.2.0-1
 - Bump to version 1.2
 * Tue Mar 18 2025 June Knauth <jknauth@tenstorrent.com> - 1.1.0-1
