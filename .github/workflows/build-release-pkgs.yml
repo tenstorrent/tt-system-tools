@@ -17,8 +17,11 @@ jobs:
         run: |
           mkdir -p ~/rpmbuild/{BUILD,BUILDROOT,RPMS,SOURCES,SPECS,SRPMS}
           cp tenstorrent-tools.spec ~/rpmbuild/SPECS/
-          cp dev-hugepages\\x2d1G.mount hugepages-setup.sh tenstorrent-hugepages.service \
-            ~/rpmbuild/SOURCES  
+          cp hugepages-setup/dev-hugepages\\x2d1G.mount \
+            hugepages-setup/hugepages-setup.sh \
+            hugepages-setup/tenstorrent-hugepages.service \
+            ~/rpmbuild/SOURCES
+          cp tt-oops/tt-oops.sh ~/rpmbuild/SOURCES
           ln -sf ~/rpmbuild/SOURCES/"dev-hugepages\x2d1G.mount" ~/rpmbuild/SOURCES/tt-hugepages-mount
           echo "%_unitdir /usr/lib/systemd/system" > ~/.rpmmacros
           version=$(echo ${{ github.ref_name }} | sed 's/^upstream\/v//')
