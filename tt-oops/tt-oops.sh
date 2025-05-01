@@ -17,6 +17,7 @@ INCLUDE_LOGS="last-hour"
 COMPRESS_OUTPUT=true
 SAMPLE_DURATION=60
 ARCHIVE_FILE=""
+COLLECT_PERFORMANCE=false
 
 # Colors for output
 RED='\033[0;31m'
@@ -933,8 +934,8 @@ EOF
 format_output() {
 	log_info "Formatting output as $OUTPUT_FORMAT"
 
-	# Generate performance sampling summary if available
-	if [[ "$COLLECTION_LEVEL" == "detailed" || "$COLLECTION_LEVEL" == "debug" ]]; then
+	# Generate performance sampling summary if available and performance collection was enabled
+	if [[ "$COLLECT_PERFORMANCE" == true && ("$COLLECTION_LEVEL" == "detailed" || "$COLLECTION_LEVEL" == "debug") ]]; then
 		generate_performance_summary
 	fi
 
@@ -1153,6 +1154,7 @@ show_usage() {
 	echo "  --logs LEVEL          Log collection level (none, last-hour, last-day, boot, full)"
 	echo "  --log-level LEVEL     Script logging verbosity (error, warn, info, debug)"
 	echo "  --no-compress         Don't compress the output"
+	echo "  --performance         Enable collection of performance metrics and sampling"
 	echo "  --sample-duration SEC Duration in seconds for continuous performance sampling (default: 60)"
 	echo
 	echo "Note: Some detailed hardware information requires root privileges and additional"
@@ -1162,7 +1164,8 @@ show_usage() {
 	echo "  $SCRIPT_NAME --level basic"
 	echo "  $SCRIPT_NAME --level detailed --logs last-day --output json"
 	echo "  $SCRIPT_NAME --level debug --logs full --log-level debug"
-	echo "  $SCRIPT_NAME --level detailed --sample-duration 120 --logs last-hour"
+	echo "  $SCRIPT_NAME --level detailed --performance --sample-duration 120 --logs last-hour"
+	echo "  $SCRIPT_NAME --performance    # Collect performance metrics with default settings"
 	echo "  $SCRIPT_NAME -v    # Show version information"
 }
 
@@ -1231,6 +1234,9 @@ parse_args() {
 		--no-compress)
 			COMPRESS_OUTPUT=false
 			;;
+		--performance)
+			COLLECT_PERFORMANCE=true
+			;;
 		--sample-duration)
 			shift
 			if [[ "$1" =~ ^[0-9]+$ ]]; then
@@ -1289,7 +1295,10 @@ main() {
 	collect_hardware_info
 	collect_software_info
 	collect_system_config
-	collect_performance_metrics
+	# Only collect performance metrics if --performance flag is provided
+	if [[ "$COLLECT_PERFORMANCE" == true ]]; then
+		collect_performance_metrics
+	fi
 	collect_tenstorrent_info
 
 	# Collect logs if requested
@@ -1297,8 +1306,10 @@ main() {
 		collect_logs
 	fi
 
-	# Wait for any running performance sampling to complete
-	wait_for_samples
+	# Wait for any running performance sampling to complete if performance collection was enabled
+	if [[ "$COLLECT_PERFORMANCE" == true ]]; then
+		wait_for_samples
+	fi
 
 	# Format the collected data
 	format_output
