@@ -389,7 +389,7 @@ collect_tenstorrent_info() {
 		run_command "tt-smi --snapshot" "$OUTPUT_DIR/tenstorrent/tt-smi_snapshot.txt" "Tenstorrent device snapshot"
 
 		# Check for device count
-		if device_count=$(tt-smi -f csv 2>/dev/null | tail -n +2 | wc -l) && [ "$device_count" -gt 0 ]; then
+		if device_count=$(tt-smi -s | jq '.device_info | length') && [ "$device_count" -gt 0 ]; then
 			log_debug "Found $device_count Tenstorrent devices"
 		fi
 	else
@@ -535,10 +535,10 @@ collect_performance_samples() {
 			"$OUTPUT_DIR/performance/samples/pids/sar_memory.pid"
 	fi
 
-	# GPU/Tenstorrent device sampling if available
+	# Tenstorrent device sampling if available
 	if command_exists tt-smi; then
 		log_debug "Starting tt-smi sampling"
-		run_sampling_command "while true; do echo \"--- \$(date -Iseconds) ---\"; tt-smi; sleep 1; done" \
+		run_sampling_command "while true; do echo \"--- \$(date -Iseconds) ---\"; tt-smi -s; sleep 1; done" \
 			"$OUTPUT_DIR/performance/samples/tt-smi.txt" \
 			"tt-smi sampling" \
 			"$duration" \
@@ -878,72 +878,6 @@ EOF
 			rm -f "$OUTPUT_DIR/performance/summary/devices.tmp"
 		else
 			echo "  grep or awk not available, cannot generate iostat summary" >>"$OUTPUT_DIR/performance/summary/performance_summary.txt"
-		fi
-
-		echo -e "\n" >>"$OUTPUT_DIR/performance/summary/performance_summary.txt"
-	fi
-
-	# Check and summarize tt-smi data if available
-	if [[ -f "$OUTPUT_DIR/performance/samples/tt-smi.txt" ]]; then
-		log_debug "Summarizing tt-smi data"
-		echo "## Tenstorrent Device Summary" >>"$OUTPUT_DIR/performance/summary/performance_summary.txt"
-
-		# Extract basic device information
-		if command_exists grep; then
-			# Count number of samples
-			samples=$(grep -c -- "--- 20" "$OUTPUT_DIR/performance/samples/tt-smi.txt" || echo 0)
-			echo "Collected $samples samples of Tenstorrent device states" >>"$OUTPUT_DIR/performance/summary/performance_summary.txt"
-
-			# Extract power states
-			if command_exists grep && command_exists awk; then
-				# Process tt-smi output for device stats
-				cat "$OUTPUT_DIR/performance/samples/tt-smi.txt" | grep -A 100 -- "--- 20" | grep -E "Device ID|Power|Clock|Temp" |
-					awk '
-          /Device ID/ {device=$NF; next}
-          /Power/ {
-            split($0, parts, "|");
-            for (i in parts) {
-              if (parts[i] ~ /Power/) {
-                gsub(/[^0-9.]/, "", parts[i]);
-                power[device] += parts[i];
-                power_count[device]++;
-              }
-            }
-          }
-          /Temp/ {
-            split($0, parts, "|");
-            for (i in parts) {
-              if (parts[i] ~ /Temp/) {
-                gsub(/[^0-9.]/, "", parts[i]);
-                temp[device] += parts[i];
-                temp_count[device]++;
-              }
-            }
-          }
-          END {
-            for (dev in power) {
-              printf "Device %s:\n", dev;
-              if (power_count[dev] > 0) {
-                printf "  Average Power: %.2f W\n", power[dev]/power_count[dev];
-              }
-              if (temp_count[dev] > 0) {
-                printf "  Average Temperature: %.2f C\n", temp[dev]/temp_count[dev];
-              }
-            }
-          }
-        ' >"$OUTPUT_DIR/performance/summary/tt-smi_summary.tmp" || true
-
-				# Add the tt-smi summary to the main summary file
-				if [[ -s "$OUTPUT_DIR/performance/summary/tt-smi_summary.tmp" ]]; then
-					cat "$OUTPUT_DIR/performance/summary/tt-smi_summary.tmp" >>"$OUTPUT_DIR/performance/summary/performance_summary.txt"
-				else
-					echo "  No parseable Tenstorrent device data found" >>"$OUTPUT_DIR/performance/summary/performance_summary.txt"
-				fi
-
-				rm -f "$OUTPUT_DIR/performance/summary/tt-smi_summary.tmp"
-			else
-				echo "  Required tools not available, cannot generate tt-smi summary" >>"$OUTPUT_DIR/performance/summary/performance_summary.txt"
-			fi
 		fi
 
 		echo -e "\n" >>"$OUTPUT_DIR/performance/summary/performance_summary.txt"
