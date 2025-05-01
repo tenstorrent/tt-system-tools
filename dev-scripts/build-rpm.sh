@@ -5,9 +5,10 @@
 mkdir -p ~/rpmbuild/{BUILD,BUILDROOT,RPMS,SOURCES,SPECS,SRPMS}
 
 # Copy source files
-cp dev-hugepages\\x2d1G.mount ~/rpmbuild/SOURCES/
-cp hugepages-setup.sh ~/rpmbuild/SOURCES/
-cp tenstorrent-hugepages.service ~/rpmbuild/SOURCES/
+cp hugepages-setup/dev-hugepages\\x2d1G.mount ~/rpmbuild/SOURCES/
+cp hugepages-setup/hugepages-setup.sh ~/rpmbuild/SOURCES/
+cp hugepages-setup/tenstorrent-hugepages.service ~/rpmbuild/SOURCES/
+cp tt-oops/tt-oops.sh ~/rpmbuild/SOURCES/
 
 cp tenstorrent-tools.spec ~/rpmbuild/SPECS/
 
