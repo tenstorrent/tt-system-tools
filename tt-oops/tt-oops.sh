@@ -168,6 +168,28 @@ collect_hardware_info() {
 	run_command "ip route" "$OUTPUT_DIR/hardware/network_routes.txt" "network routes"
 	run_command "netstat -tuln" "$OUTPUT_DIR/hardware/netstat.txt" "network statistics" || true
 
+	# Collect ethtool information for each network interface
+	if command_exists ethtool && command_exists ip; then
+		log_debug "Collecting ethtool information"
+		mkdir -p "$OUTPUT_DIR/hardware/ethtool"
+
+		# Get list of network interfaces (excluding loopback)
+		mapfile -t interfaces < <(ip -o link show | awk -F': ' '{print $2}' | cut -d@ -f1 | grep -v '^lo$')
+
+		for iface in "${interfaces[@]}"; do
+			# Collect general interface information
+			run_command "ethtool $iface" "$OUTPUT_DIR/hardware/ethtool/${iface}_general.txt" "ethtool general info for $iface" || true
+			# Collect interface statistics
+			run_command "ethtool -S $iface" "$OUTPUT_DIR/hardware/ethtool/${iface}_statistics.txt" "ethtool statistics for $iface" || true
+			# Collect interface features
+			run_command "ethtool -k $iface" "$OUTPUT_DIR/hardware/ethtool/${iface}_features.txt" "ethtool features for $iface" || true
+			# Collect interface driver information
+			run_command "ethtool -i $iface" "$OUTPUT_DIR/hardware/ethtool/${iface}_driver.txt" "ethtool driver info for $iface" || true
+		done
+	else
+		log_warn "ethtool or ip command not available, skipping ethtool information collection"
+	fi
+
 	# System hardware info
 	if command_exists dmidecode && [[ $EUID -eq 0 ]]; then
 		log_debug "Collecting DMI information"
