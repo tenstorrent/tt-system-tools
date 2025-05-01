@@ -868,13 +868,13 @@ EOF
 		# Extract basic device information
 		if command_exists grep; then
 			# Count number of samples
-			samples=$(grep -c "--- 20" "$OUTPUT_DIR/performance/samples/tt-smi.txt" || echo 0)
+			samples=$(grep -c -- "--- 20" "$OUTPUT_DIR/performance/samples/tt-smi.txt" || echo 0)
 			echo "Collected $samples samples of Tenstorrent device states" >>"$OUTPUT_DIR/performance/summary/performance_summary.txt"
 
 			# Extract power states
 			if command_exists grep && command_exists awk; then
 				# Process tt-smi output for device stats
-				cat "$OUTPUT_DIR/performance/samples/tt-smi.txt" | grep -A 100 "--- 20" | grep -E "Device ID|Power|Clock|Temp" |
+				cat "$OUTPUT_DIR/performance/samples/tt-smi.txt" | grep -A 100 -- "--- 20" | grep -E "Device ID|Power|Clock|Temp" |
 					awk '
           /Device ID/ {device=$NF; next}
           /Power/ {
@@ -908,7 +908,7 @@ EOF
               }
             }
           }
-        ' >"$OUTPUT_DIR/performance/summary/tt-smi_summary.tmp"
+        ' >"$OUTPUT_DIR/performance/summary/tt-smi_summary.tmp" || true
 
 				# Add the tt-smi summary to the main summary file
 				if [[ -s "$OUTPUT_DIR/performance/summary/tt-smi_summary.tmp" ]]; then
