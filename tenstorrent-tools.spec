@@ -1,7 +1,7 @@
 %global _name tenstorrent-tools
 
 Name:           %{_name}
-Version:        1.3.1
+Version:        0.0.0 # Fixed up by build script
 Release:        1%{?dist}
 Summary:        Setup and support scripts for Tenstorrent hardware
 License:        Apache-2.0

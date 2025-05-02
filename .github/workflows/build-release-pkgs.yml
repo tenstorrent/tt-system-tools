@@ -2,7 +2,7 @@ name: Build Release Packages
 run-name: Build Release Packages
 on:
   push:
-    tags: [ 'upstream/v*' ]
+    tags: [ 'v*' ]
 
 jobs:
   buildrpm:
@@ -24,7 +24,7 @@ jobs:
           cp tt-oops/tt-oops.sh ~/rpmbuild/SOURCES
           ln -sf ~/rpmbuild/SOURCES/"dev-hugepages\x2d1G.mount" ~/rpmbuild/SOURCES/tt-hugepages-mount
           echo "%_unitdir /usr/lib/systemd/system" > ~/.rpmmacros
-          version=$(echo ${{ github.ref_name }} | sed 's/^upstream\/v//')
+          version=$(echo ${{ github.ref_name }} | sed 's/^v//')
           sed -i "s/Version:.*/Version:        ${version}/" ~/rpmbuild/SPECS/tenstorrent-tools.spec
       - name: Build RPM package
         run: rpmbuild -bb ~/rpmbuild/SPECS/tenstorrent-tools.spec 
@@ -45,7 +45,7 @@ jobs:
           fetch-tags: true
           fetch-depth: 0
       - run: |
-          gbp buildpackage --git-ignore-branch --git-upstream-tag='upstream/v%(version)s' --git-export-dir="~"
+          gbp buildpackage --git-ignore-branch --git-upstream-tag='v%(version)s' --git-export-dir="~"
       - name: Upload DEB artifact
         uses: actions/upload-artifact@v4
         with:
