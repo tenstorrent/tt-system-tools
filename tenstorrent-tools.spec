@@ -1,9 +1,9 @@
 %global _name tenstorrent-tools
 
 Name:           %{_name}
-Version:        1.0.0
+Version:        0.0.0 # Fixed up by build script
 Release:        1%{?dist}
-Summary:        Setup scripts for Tenstorrent hardware
+Summary:        Setup and support scripts for Tenstorrent hardware
 License:        Apache-2.0
 
 BuildArch:      noarch
@@ -17,10 +17,11 @@ Source2:        hugepages-setup/tt-hugepages-mount
 Source3:        tt-oops/tt-oops.sh
 
 %description
-This package contains setup scripts for Tenstorrent hardware.
-It includes any setup scripts, including systemd loading helpers,
-for the system to use to help get the cards up and running.
-This includes: hugepages setup.
+This package contains setup and support scripts for Tenstorrent hardware.
+It includes any setup scripts, including systemd loading helpers, for
+the system to use to help get the cards up and running.
+It also includes helper scripts for support and diagnosing issues with
+the hardware or software.
 
 %prep
 # Nothing to prep
@@ -61,6 +62,10 @@ chmod 755 %{buildroot}%{_sbindir}/tenstorrent-tools.post
 %{_sbindir}/tenstorrent-tools.post
 
 %changelog
+* Thu May 1 2025 Olof Johansson <olofj@tenstorrent.com> - 1.3.1
+- tt-oops: Don't collect tt-smi samples for performance yet
+- tt-oops: Collect ethtool output for network interfaces
+
 * Tue Apr 30 2025 Olof Johansson <olofj@tenstorrent.com> - 1.3.0-1
 - Refactor repository structure
 - Add tt-oops system diagnostic tool

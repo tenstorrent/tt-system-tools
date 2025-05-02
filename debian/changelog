@@ -1,3 +1,9 @@
+tenstorrent-tools (1.3.1) UNRELEASED; urgency=medium
+  * tt-oops: Don't collect tt-smi samples for performance yet
+  * tt-oops: Collect ethtool output for network interfaces
+
+ -- Olof Johansson <olofj@tenstorrent.com>  Wed, 01 May 2025 00:00:00 -0700
+
 tenstorrent-tools (1.3-1) UNRELEASED; urgency=medium
   * Refactor repository structure
   * Add tt-oops system diagnostic tool
