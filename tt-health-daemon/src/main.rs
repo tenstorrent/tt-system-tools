@@ -1,5 +1,7 @@
-mod device;
+// mod device;
+mod socket;
 
 fn main() {
-   let _ = device::get_tenstorrent_sysfs_dirs();
+   let _ = socket::start_unix_listener();
 }
+

@@ -4,7 +4,7 @@ use std::io;
 
 pub const TENSTORRENT_SYS_DIR: &str = "/sys/class/tenstorrent";
 
-// Struct of sysfs and hwmon attributes
+// Struct of attributes and hwmon
 // Keeping all the attributes as Strings for now
 pub struct TenstorrentDevice {
     pub tt_aiclk: Option<String>,
@@ -33,30 +33,19 @@ pub struct PciePerfCounters {
     pub slv_rd_data_word_sent1: u32,
 }
 
-// Grab sysfs tenstorrent devices
-pub fn get_tenstorrent_sysfs_dirs() -> io::Result<()>  {
-    for entry in fs::read_dir(TENSTORRENT_SYS_DIR)? {
-        let instance = TenstorrentDevice::from_dir(&entry?.path())?;
-        println!("{:?}", instance.tt_card_type);
-        println!("{:?}", instance.tt_axiclk);
-        println!("{:?}", instance.tt_asic_id);
-    }
-    Ok(())
-}
-
-pub fn sysfs_read_to_u32(path: &Path) -> io::Result<u32> {
+fn sysfs_read_to_u32(path: &Path) -> io::Result<u32> {
     let content = fs::read_to_string(&path)?;
     let content_trim = &content.trim();
     u32::from_str_radix(content_trim, 16).map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))
 }
 
-pub fn sysfs_read_to_u64(path: &Path) -> io::Result<u64> {
+fn sysfs_read_to_u64(path: &Path) -> io::Result<u64> {
     let content = fs::read_to_string(&path)?;
     let content_trim = &content.trim();
     u64::from_str_radix(content_trim, 16).map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))
 }
 
-pub fn sysfs_read_to_string(path: &Path) -> io::Result<String> {
+fn sysfs_read_to_string(path: &Path) -> io::Result<String> {
     let content = fs::read_to_string(&path)?;
     Ok(content.trim().to_string())
 }
@@ -100,4 +89,15 @@ impl TenstorrentDevice {
 
         Ok(instance)
     }
+}
+
+// Grab sysfs tenstorrent devices
+pub fn get_tenstorrent_sysfs_dirs() -> io::Result<()>  {
+    for entry in fs::read_dir(TENSTORRENT_SYS_DIR)? {
+        let instance = TenstorrentDevice::from_dir(&entry?.path())?;
+        println!("{:?}", instance.tt_card_type);
+        println!("{:?}", instance.tt_axiclk);
+        println!("{:?}", instance.tt_asic_id);
+    }
+    Ok(())
 }
