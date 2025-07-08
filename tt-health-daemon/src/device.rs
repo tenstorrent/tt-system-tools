@@ -20,29 +20,23 @@ pub struct TenstorrentDevice {
 
 pub struct PciePerfCounters {
     pub mst_nonposted_wr_data_word_sent0: u32,
-    pub mst_posted_wr_data_word_sent1: u32,
-    pub slv_nonposted_wr_data_word_received0: u32,
-    pub slv_posted_wr_data_word_received1: u32,
     pub mst_nonposted_wr_data_word_sent1: u32,
-    pub mst_rd_data_word_received0: u32,
-    pub slv_nonposted_wr_data_word_received1: u32,
-    pub slv_rd_data_word_sent0: u32,
     pub mst_posted_wr_data_word_sent0: u32,
+    pub mst_posted_wr_data_word_sent1: u32,
+    pub mst_rd_data_word_received0: u32,
     pub mst_rd_data_word_received1: u32,
+    pub slv_nonposted_wr_data_word_received0: u32,
+    pub slv_nonposted_wr_data_word_received1: u32,
     pub slv_posted_wr_data_word_received0: u32,
+    pub slv_posted_wr_data_word_received1: u32,
+    pub slv_rd_data_word_sent0: u32,
     pub slv_rd_data_word_sent1: u32,
 }
 
 fn sysfs_read_to_u32(path: &Path) -> io::Result<u32> {
     let content = fs::read_to_string(&path)?;
     let content_trim = &content.trim();
-    u32::from_str_radix(content_trim, 16).map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))
-}
-
-fn sysfs_read_to_u64(path: &Path) -> io::Result<u64> {
-    let content = fs::read_to_string(&path)?;
-    let content_trim = &content.trim();
-    u64::from_str_radix(content_trim, 16).map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))
+    u32::from_str_radix(content_trim, 10).map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))
 }
 
 fn sysfs_read_to_string(path: &Path) -> io::Result<String> {
@@ -83,9 +77,31 @@ impl TenstorrentDevice {
                 "tt_fw_bundle_ver" => instance.tt_fw_bundle_ver =  Some(sysfs_read_to_string(&file_path)?),
                 "tt_m3app_fw_ver" => instance.tt_m3app_fw_ver =  Some(sysfs_read_to_string(&file_path)?),
                 "tt_serial" => instance.tt_serial =  Some(sysfs_read_to_string(&file_path)?),
-                _ => (), // Ignore unknown files
+                "pcie_perf_counters" => instance.pcie_perf_counters = Some(PciePerfCounters::from_dir(&file_path)?),
+                _ => (), // Ignore unknown values
             }
         }
+
+        Ok(instance)
+    }
+}
+
+impl PciePerfCounters {
+    fn from_dir(path: &Path) -> io::Result<Self> {
+        let instance = Self {
+            mst_nonposted_wr_data_word_sent0: sysfs_read_to_u32(&path.join("mst_nonposted_wr_data_word_sent0"))?,
+            mst_nonposted_wr_data_word_sent1: sysfs_read_to_u32(&path.join("mst_nonposted_wr_data_word_sent1"))?,
+            mst_posted_wr_data_word_sent0: sysfs_read_to_u32(&path.join("mst_posted_wr_data_word_sent0"))?,
+            mst_posted_wr_data_word_sent1: sysfs_read_to_u32(&path.join("mst_posted_wr_data_word_sent1"))?,
+            mst_rd_data_word_received0: sysfs_read_to_u32(&path.join("mst_rd_data_word_received0"))?,
+            mst_rd_data_word_received1: sysfs_read_to_u32(&path.join("mst_rd_data_word_received1"))?,
+            slv_nonposted_wr_data_word_received0: sysfs_read_to_u32(&path.join("slv_nonposted_wr_data_word_received0"))?,
+            slv_nonposted_wr_data_word_received1: sysfs_read_to_u32(&path.join("slv_nonposted_wr_data_word_received1"))?,
+            slv_posted_wr_data_word_received0: sysfs_read_to_u32(&path.join("slv_posted_wr_data_word_received0"))?,
+            slv_posted_wr_data_word_received1: sysfs_read_to_u32(&path.join("slv_posted_wr_data_word_received1"))?,
+            slv_rd_data_word_sent0: sysfs_read_to_u32(&path.join("slv_rd_data_word_sent0"))?,
+            slv_rd_data_word_sent1: sysfs_read_to_u32(&path.join("slv_rd_data_word_sent1"))?
+        };
 
         Ok(instance)
     }
@@ -98,6 +114,14 @@ pub fn get_tenstorrent_sysfs_dirs() -> io::Result<()>  {
         println!("{:?}", instance.tt_card_type);
         println!("{:?}", instance.tt_axiclk);
         println!("{:?}", instance.tt_asic_id);
+        match instance.pcie_perf_counters {
+            Some(ref counters) => {
+                println!("{}", counters.mst_posted_wr_data_word_sent0);
+            }
+            None => {
+                break;
+            }
+        }
     }
     Ok(())
 }
