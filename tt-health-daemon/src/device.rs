@@ -1,12 +1,14 @@
 use std::path::Path;
+use std::time::SystemTime;
 use std::fs;
 use std::io;
 
 pub const TENSTORRENT_SYS_DIR: &str = "/sys/class/tenstorrent";
 
-// Struct of attributes and hwmon
-// Keeping all the attributes as Strings for now
+// Tenstorrent device attribute struct
+// Keeping all attributes as Strings for now
 pub struct TenstorrentDevice {
+    pub timestamp: Option<SystemTime>,
     pub tt_aiclk: Option<String>,
     pub tt_arcclk: Option<String>,
     pub tt_asic_id: Option<String>,
@@ -47,6 +49,7 @@ fn sysfs_read_to_string(path: &Path) -> io::Result<String> {
 impl TenstorrentDevice {
     fn default() -> Self {
         Self {
+            timestamp: None,
             tt_aiclk: None,
             tt_arcclk: None,
             tt_asic_id: None,
@@ -64,11 +67,10 @@ impl TenstorrentDevice {
 
         for entry in fs::read_dir(&path)? {
             let entry = entry?;
-            let file_name = entry.file_name();
-            let file_name_str = file_name.to_string_lossy();
+            let file_name_str = entry.file_name();
             let file_path = entry.path();
 
-            match file_name_str.as_ref() {
+            match file_name_str.to_string_lossy().as_ref() {
                 "tt_aiclk" => instance.tt_aiclk =  Some(sysfs_read_to_string(&file_path)?),
                 "tt_arcclk" => instance.tt_arcclk =  Some(sysfs_read_to_string(&file_path)?),
                 "tt_asic_id" => instance.tt_asic_id =  Some(sysfs_read_to_string(&file_path)?),
@@ -81,6 +83,8 @@ impl TenstorrentDevice {
                 _ => (), // Ignore unknown values
             }
         }
+
+        instance.timestamp = Some(SystemTime::now());
 
         Ok(instance)
     }
@@ -107,21 +111,12 @@ impl PciePerfCounters {
     }
 }
 
-// Grab sysfs tenstorrent devices
-pub fn get_tenstorrent_sysfs_dirs() -> io::Result<()>  {
+pub fn get_tenstorrent_devices() -> io::Result<Vec<TenstorrentDevice>>  {
+    let mut devices = Vec::new();
+
     for entry in fs::read_dir(TENSTORRENT_SYS_DIR)? {
-        let instance = TenstorrentDevice::from_dir(&entry?.path())?;
-        println!("{:?}", instance.tt_card_type);
-        println!("{:?}", instance.tt_axiclk);
-        println!("{:?}", instance.tt_asic_id);
-        match instance.pcie_perf_counters {
-            Some(ref counters) => {
-                println!("{}", counters.mst_posted_wr_data_word_sent0);
-            }
-            None => {
-                break;
-            }
-        }
+        devices.push(TenstorrentDevice::from_dir(&entry?.path())?);
     }
-    Ok(())
+    
+    Ok(devices)
 }
