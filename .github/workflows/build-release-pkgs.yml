@@ -35,6 +35,36 @@ jobs:
           path: ~/rpmbuild/RPMS/noarch/tenstorrent-tools-*.rpm
           retention-days: 1
 
+  buildrpmarm:
+    runs-on: self-hosted
+    steps:
+      - run: sudo apt-get update && sudo apt-get install -y rpm
+      - uses: actions/checkout@v4
+        with:
+          fetch-tags: true
+          fetch-depth: 0
+      - name: Set up RPM build environment
+        run: |
+          mkdir -p ~/rpmbuild/{BUILD,BUILDROOT,RPMS,SOURCES,SPECS,SRPMS}
+          cp tenstorrent-tools.spec ~/rpmbuild/SPECS/
+          cp hugepages-setup/dev-hugepages\\x2d1G.mount \
+            hugepages-setup/hugepages-setup.sh \
+            hugepages-setup/tenstorrent-hugepages.service \
+            ~/rpmbuild/SOURCES
+          cp tt-oops/tt-oops.sh ~/rpmbuild/SOURCES
+          ln -sf ~/rpmbuild/SOURCES/"dev-hugepages\x2d1G.mount" ~/rpmbuild/SOURCES/tt-hugepages-mount
+          echo "%_unitdir /usr/lib/systemd/system" > ~/.rpmmacros
+          version=$(echo ${{ github.ref_name }} | sed 's/^v//')
+          sed -i "s/Version:.*/Version:        ${version}/" ~/rpmbuild/SPECS/tenstorrent-tools.spec
+      - name: Build RPM package
+        run: rpmbuild -bb ~/rpmbuild/SPECS/tenstorrent-tools.spec 
+      - name: Upload RPM artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: rpm-package
+          path: ~/rpmbuild/RPMS/noarch/tenstorrent-tools-*.rpm
+          retention-days: 1
+
   builddeb:
     runs-on: ubuntu-latest
     steps:
