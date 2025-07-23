@@ -35,7 +35,7 @@ jobs:
           path: ~/rpmbuild/RPMS/noarch/tenstorrent-tools-*.rpm
           retention-days: 1
 
-  buildrpmarm:
+  buildrpmaarch64:
     runs-on: self-hosted
     steps:
       - uses: actions/checkout@v4
@@ -60,7 +60,7 @@ jobs:
       - name: Upload RPM artifact
         uses: actions/upload-artifact@v4
         with:
-          name: rpm-package
+          name: rpm-aarch64-package
           path: ~/rpmbuild/RPMS/noarch/tenstorrent-tools-*.rpm
           retention-days: 1
 
@@ -83,7 +83,7 @@ jobs:
           retention-days: 1
 
   create_release:
-    needs: [buildrpm, builddeb]
+    needs: [buildrpm, buildrpmaarch64, builddeb]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -102,6 +102,12 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: rpm-package
+          path: ./packages/rpm
+      
+      - name: Download RPM aarch64 artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: rpm-aarch64-package
           path: ./packages/rpm
       
       - name: Download DEB artifact
