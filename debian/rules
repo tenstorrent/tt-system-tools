@@ -9,5 +9,4 @@ override_dh_fixperms:
 	chmod 755 debian/tenstorrent-tools/opt/tenstorrent/bin/hugepages-setup.sh
 
 override_dh_installsystemd:
-	dh_installsystemd --name=tenstorrent-hugepages.service
-	dh_installsystemd --name=dev-hugepages\x2d1G.mount
+	dh_installsystemd
