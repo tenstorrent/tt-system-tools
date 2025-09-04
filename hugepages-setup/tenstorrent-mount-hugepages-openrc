@@ -1,0 +1,29 @@
+#!/sbin/openrc-run
+
+name="tenstorrent-mount-hugepages"
+description="Mount hugepages at /dev/hugepages-1G for Tenstorrent ASICs"
+command_user="root"
+
+depend() {
+    before sysinit
+    need localmount
+}
+
+start() {
+    ebegin "Mounting hugepages at /dev/hugepages-1G"
+    if [ -d /sys/kernel/mm/hugepages/hugepages-1048576kB ]; then
+        mkdir -p /dev/hugepages-1G
+        mount -t hugetlbfs -o pagesize=1G,mode=0777,nosuid,nodev hugetlbfs /dev/hugepages-1G
+    else
+        eend 1 "Hugepages (1G) not supported by kernel"
+    fi
+    eend $?
+}
+
+stop() {
+    ebegin "Unmounting hugepages at /dev/hugepages-1G"
+    if mountpoint -q /dev/hugepages-1G; then
+        umount /dev/hugepages-1G
+    fi
+    eend $?
+}
