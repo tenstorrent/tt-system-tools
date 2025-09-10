@@ -3,11 +3,11 @@ use std::time::SystemTime;
 use std::fs;
 use std::io;
 
-pub const TENSTORRENT_SYS_DIR: &str = "/sys/class/tenstorrent";
+pub const TT_SYS_DIR: &str = "/sys/class/tenstorrent";
 
 // Tenstorrent device attribute struct
 // Keeping all attributes as Strings for now
-pub struct TenstorrentDevice {
+pub struct TTDevice {
     pub timestamp: Option<SystemTime>,
     pub tt_aiclk: Option<String>,
     pub tt_arcclk: Option<String>,
@@ -18,6 +18,7 @@ pub struct TenstorrentDevice {
     pub tt_m3app_fw_ver: Option<String>,
     pub tt_serial: Option<String>,
     pub pcie_perf_counters: Option<PciePerfCounters>,
+    pub telemetry: Option<Telemetry>,
 }
 
 pub struct PciePerfCounters {
@@ -35,6 +36,14 @@ pub struct PciePerfCounters {
     pub slv_rd_data_word_sent1: u32,
 }
 
+pub struct Telemetry {
+    pub current: u32,
+    pub power: u32,
+    pub asic_temp: u32,
+    pub vcore: u32,
+    pub fan_rpm: u32,
+}
+
 fn sysfs_read_to_u32(path: &Path) -> io::Result<u32> {
     let content = fs::read_to_string(&path)?;
     let content_trim = &content.trim();
@@ -46,47 +55,21 @@ fn sysfs_read_to_string(path: &Path) -> io::Result<String> {
     Ok(content.trim().to_string())
 }
 
-impl TenstorrentDevice {
-    fn default() -> Self {
-        Self {
-            timestamp: None,
-            tt_aiclk: None,
-            tt_arcclk: None,
-            tt_asic_id: None,
-            tt_axiclk: None,
-            tt_card_type: None,
-            tt_fw_bundle_ver: None,
-            tt_m3app_fw_ver: None,
-            tt_serial: None,
-            pcie_perf_counters: None,
-        }
-    }
-
+impl TTDevice {
     fn from_dir(path: &Path) -> io::Result<Self> {
-        let mut instance = Self::default();
-
-        for entry in fs::read_dir(&path)? {
-            let entry = entry?;
-            let file_name_str = entry.file_name();
-            let file_path = entry.path();
-
-            match file_name_str.to_string_lossy().as_ref() {
-                "tt_aiclk" => instance.tt_aiclk =  Some(sysfs_read_to_string(&file_path)?),
-                "tt_arcclk" => instance.tt_arcclk =  Some(sysfs_read_to_string(&file_path)?),
-                "tt_asic_id" => instance.tt_asic_id =  Some(sysfs_read_to_string(&file_path)?),
-                "tt_axiclk" => instance.tt_axiclk =  Some(sysfs_read_to_string(&file_path)?),
-                "tt_card_type" => instance.tt_card_type = Some(sysfs_read_to_string(&file_path)?),
-                "tt_fw_bundle_ver" => instance.tt_fw_bundle_ver =  Some(sysfs_read_to_string(&file_path)?),
-                "tt_m3app_fw_ver" => instance.tt_m3app_fw_ver =  Some(sysfs_read_to_string(&file_path)?),
-                "tt_serial" => instance.tt_serial =  Some(sysfs_read_to_string(&file_path)?),
-                "pcie_perf_counters" => instance.pcie_perf_counters = Some(PciePerfCounters::from_dir(&file_path)?),
-                _ => (), // Ignore unknown values
-            }
-        }
-
-        instance.timestamp = Some(SystemTime::now());
-
-        Ok(instance)
+        Ok(Self {
+            timestamp: Some(SystemTime::now()),
+            tt_aiclk: sysfs_read_to_string(&path.join("tt_aiclk")).ok(),
+            tt_arcclk: sysfs_read_to_string(&path.join("tt_arcclk")).ok(),
+            tt_asic_id: sysfs_read_to_string(&path.join("tt_asic_id")).ok(),
+            tt_axiclk: sysfs_read_to_string(&path.join("tt_axiclk")).ok(),
+            tt_card_type: sysfs_read_to_string(&path.join("tt_card_type")).ok(),
+            tt_fw_bundle_ver: sysfs_read_to_string(&path.join("tt_fw_bundle_ver")).ok(),
+            tt_m3app_fw_ver: sysfs_read_to_string(&path.join("tt_m3app_fw_ver")).ok(),
+            tt_serial: sysfs_read_to_string(&path.join("tt_serial")).ok(),
+            pcie_perf_counters: PciePerfCounters::from_dir(&path.join("pcie_perf_counters")).ok(),
+            telemetry: Telemetry::from_dir(path).ok(),
+        })
     }
 }
 
@@ -111,11 +94,27 @@ impl PciePerfCounters {
     }
 }
 
-pub fn get_tenstorrent_devices() -> io::Result<Vec<TenstorrentDevice>>  {
+impl Telemetry {
+    fn from_dir(path: &Path) -> io::Result<Self> {
+        const HWMON_PATH: &str = "device/hwmon/hwmon2/"; // TODO: is it always hwmon2
+        let base_path = path.join(HWMON_PATH);
+        let instance = Self {
+            current: sysfs_read_to_u32(&base_path.join("curr1_input"))?,
+            power: sysfs_read_to_u32(&base_path.join("power1_input"))?,
+            asic_temp: sysfs_read_to_u32(&base_path.join("temp1_input"))?,
+            vcore: sysfs_read_to_u32(&base_path.join("in0_input"))?,
+            fan_rpm: sysfs_read_to_u32(&base_path.join("fan1_input"))?,
+        };
+
+        Ok(instance)
+    }
+}
+
+pub fn get_tenstorrent_devices() -> io::Result<Vec<TTDevice>>  {
     let mut devices = Vec::new();
 
-    for entry in fs::read_dir(TENSTORRENT_SYS_DIR)? {
-        devices.push(TenstorrentDevice::from_dir(&entry?.path())?);
+    for entry in fs::read_dir(TT_SYS_DIR)? {
+        devices.push(TTDevice::from_dir(&entry?.path())?);
     }
     
     Ok(devices)
