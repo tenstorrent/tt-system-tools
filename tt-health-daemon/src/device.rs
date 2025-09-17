@@ -4,15 +4,14 @@ use std::io;
 use chrono::{DateTime, Utc};
 
 // Tenstorrent device attribute struct
-// Keeping all attributes as Strings for now
 #[derive(Debug)]
 pub struct TTDevice {
-    pub time: DateTime<Utc>,
     pub device_path: String,
-    pub tt_aiclk: Option<String>,
-    pub tt_arcclk: Option<String>,
+    pub time: DateTime<Utc>,
+    pub tt_aiclk: Option<u32>,
+    pub tt_arcclk: Option<u32>,
     pub tt_asic_id: Option<String>,
-    pub tt_axiclk: Option<String>,
+    pub tt_axiclk: Option<u32>,
     pub tt_card_type: Option<String>,
     pub tt_fw_bundle_ver: Option<String>,
     pub tt_m3app_fw_ver: Option<String>,
@@ -78,10 +77,10 @@ impl TTDevice {
     pub fn update(&mut self) -> io::Result<()> {
         let path = Path::new(&self.device_path);
         self.time = Utc::now();
-        self.tt_aiclk = sysfs_read_to_string(&path.join("tt_aiclk"));
-        self.tt_arcclk = sysfs_read_to_string(&path.join("tt_arcclk"));
+        self.tt_aiclk = sysfs_read_to_u32(&path.join("tt_aiclk"));
+        self.tt_arcclk = sysfs_read_to_u32(&path.join("tt_arcclk"));
         self.tt_asic_id = sysfs_read_to_string(&path.join("tt_asic_id"));
-        self.tt_axiclk = sysfs_read_to_string(&path.join("tt_axiclk"));
+        self.tt_axiclk = sysfs_read_to_u32(&path.join("tt_axiclk"));
         self.tt_card_type = sysfs_read_to_string(&path.join("tt_card_type"));
         self.tt_fw_bundle_ver = sysfs_read_to_string(&path.join("tt_fw_bundle_ver"));
         self.tt_m3app_fw_ver = sysfs_read_to_string(&path.join("tt_m3app_fw_ver"));
