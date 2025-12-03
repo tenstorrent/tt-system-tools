@@ -1,0 +1,4 @@
+#!/bin/sh
+
+rc-update delete tenstorrent-hugepages 
+rc-update delete tenstorrent-mount-hugepages 
