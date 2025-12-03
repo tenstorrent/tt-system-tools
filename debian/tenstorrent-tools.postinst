@@ -20,7 +20,7 @@ if [ -f /etc/default/grub ]; then
         NEW_GRUB_CMDLINE_LINUX_DEFAULT="$GRUB_CMDLINE_LINUX_DEFAULT $CUSTOM_KERNEL_PARAMETERS"
 
         sed -i \
-          "s/^GRUB_CMDLINE_LINUX_DEFAULT=.*/GRUB_CMDLINE_LINUX_DEFAULT=\"${NEW_GRUB_CMDLINE_LINUX_DEFAULT}\"/" \
+          "/^GRUB_CMDLINE_LINUX_DEFAULT=/c\\GRUB_CMDLINE_LINUX_DEFAULT=\"${NEW_GRUB_CMDLINE_LINUX_DEFAULT}\"" \
           /etc/default/grub
 
         # Only run update-grub if present (not in GitHub runners)
