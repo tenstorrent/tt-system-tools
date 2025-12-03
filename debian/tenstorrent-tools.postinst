@@ -1,22 +1,37 @@
 #!/bin/sh
-
 set -e
 
-# Custom kernel parameters to be added
 CUSTOM_KERNEL_PARAMETERS="iommu=pt"
 
-# Get the current value of GRUB_CMDLINE_LINUX_DEFAULT
-GRUB_CMDLINE_LINUX_DEFAULT="$(. /etc/default/grub ; echo $GRUB_CMDLINE_LINUX_DEFAULT)"
+# Check if /etc/default/grub exists
+if [ -f /etc/default/grub ]; then
+    # Source GRUB settings safely
+    . /etc/default/grub
 
-# Check if the custom parameters are already present in the GRUB_CMDLINE_LINUX_DEFAULT
-if echo "$GRUB_CMDLINE_LINUX_DEFAULT" | grep -qw "$CUSTOM_KERNEL_PARAMETERS"; then
-  echo "Custom kernel parameters already set."
+    # Fall back if variable is unset
+    GRUB_CMDLINE_LINUX_DEFAULT="${GRUB_CMDLINE_LINUX_DEFAULT:-}"
+
+    # Check if custom parameter already exists
+    if echo "$GRUB_CMDLINE_LINUX_DEFAULT" | grep -qw "$CUSTOM_KERNEL_PARAMETERS"; then
+        echo "Custom kernel parameters already set."
+    else
+        echo "Adding custom kernel parameter: $CUSTOM_KERNEL_PARAMETERS"
+
+        NEW_GRUB_CMDLINE_LINUX_DEFAULT=$(echo "$GRUB_CMDLINE_LINUX_DEFAULT $CUSTOM_KERNEL_PARAMETERS" | sed 's/^ *//;s/ *$//')
+
+        sed -i \
+          "/^GRUB_CMDLINE_LINUX_DEFAULT=/c\\GRUB_CMDLINE_LINUX_DEFAULT=\"${NEW_GRUB_CMDLINE_LINUX_DEFAULT}\"" \
+          /etc/default/grub
+
+        # Only run update-grub if present (not in GitHub runners)
+        if command -v update-grub >/dev/null 2>&1; then
+            update-grub
+        else
+            echo "update-grub not found; skipping GRUB update (likely running in CI or minimal environment)"
+        fi
+    fi
 else
-  # Append the custom parameters to the existing GRUB_CMDLINE_LINUX_DEFAULT
-  NEW_GRUB_CMDLINE_LINUX_DEFAULT="$GRUB_CMDLINE_LINUX_DEFAULT $CUSTOM_KERNEL_PARAMETERS"
-  sed -i "s/^GRUB_CMDLINE_LINUX_DEFAULT=.*/GRUB_CMDLINE_LINUX_DEFAULT=\"$NEW_GRUB_CMDLINE_LINUX_DEFAULT\"/" /etc/default/grub
-  # Update GRUB configuration
-  update-grub
+    echo "Skipping GRUB modifications: /etc/default/grub does not exist (probably a minimal CI environment)"
 fi
 
 #DEBHELPER#
