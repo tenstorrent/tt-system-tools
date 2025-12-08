@@ -5,7 +5,17 @@ on:
     tags: [ 'v*' ]
 
 jobs:
+  get-version:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.get_version.outputs.version }}
+    steps:
+      - name: Extract version from tag
+        id: get_version
+        run: echo "version=$(echo ${{ github.ref_name }} | sed 's/^v//')" >> $GITHUB_OUTPUT
+
   buildrpm:
+    needs: get-version
     runs-on: ubuntu-latest
     steps:
       - run: sudo apt-get update && sudo apt-get install -y rpm
@@ -24,8 +34,7 @@ jobs:
           cp tt-oops/tt-oops.sh ~/rpmbuild/SOURCES
           ln -sf ~/rpmbuild/SOURCES/"dev-hugepages\x2d1G.mount" ~/rpmbuild/SOURCES/tt-hugepages-mount
           echo "%_unitdir /usr/lib/systemd/system" > ~/.rpmmacros
-          version=$(echo ${{ github.ref_name }} | sed 's/^v//')
-          sed -i "s/Version:.*/Version:        ${version}/" ~/rpmbuild/SPECS/tenstorrent-tools.spec
+          sed -i "s/Version:.*/Version:        ${{ needs.get-version.outputs.version }}/" ~/rpmbuild/SPECS/tenstorrent-tools.spec
       - name: Build RPM package
         run: rpmbuild -bb ~/rpmbuild/SPECS/tenstorrent-tools.spec 
       - name: Upload RPM artifact
@@ -36,6 +45,7 @@ jobs:
           retention-days: 1
 
   builddeb:
+    needs: get-version
     runs-on: ubuntu-latest
     steps:
       - run: sudo apt update
@@ -44,8 +54,18 @@ jobs:
         with:
           fetch-tags: true
           fetch-depth: 0
-      - run: |
-          gbp buildpackage --git-ignore-branch --git-upstream-tag='v%(version)s' --git-export-dir="~"
+      - name: Verify changelog version matches tag
+        run: |
+          expected_version="${{ needs.get-version.outputs.version }}"
+          changelog_version=$(head -n1 debian/changelog | grep -oP '\(\K[^)]+')
+          if [ "$changelog_version" != "$expected_version" ]; then
+            echo "ERROR: debian/changelog version ($changelog_version) does not match tag version ($expected_version)"
+            echo "Please update debian/changelog before creating a release tag"
+            exit 1
+          fi
+          echo "Changelog version matches tag version: $expected_version"
+      - name: Build DEB package
+        run: gbp buildpackage --git-ignore-branch --git-upstream-tag='v%(version)s' --git-export-dir="${HOME}"
       - name: Upload DEB artifact
         uses: actions/upload-artifact@v4
         with:
@@ -69,19 +89,19 @@ jobs:
           tag_name: ${{ github.ref_name }}
         env:
           GITHUB_TOKEN: ${{ github.token }}
-      
+
       - name: Download RPM artifact
         uses: actions/download-artifact@v4
         with:
           name: rpm-package
           path: ./packages/rpm
-      
+
       - name: Download DEB artifact
         uses: actions/download-artifact@v4
         with:
           name: deb-package
           path: ./packages/deb
-      
+
       - name: Upload packages to release
         run: |
           find ./packages -type f -name "*.rpm" -o -name "*.deb" | xargs -I{} gh release upload ${{ github.ref_name }} {}
