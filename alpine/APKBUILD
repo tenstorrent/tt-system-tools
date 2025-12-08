@@ -1,0 +1,27 @@
+# Contributor: Reku Dyu <rekudyu@airmail.cc>
+# Maintainer: Reku Dyu <rekudyu@airmail.cc>
+pkgname="tt-system-tools"
+pkgver="1.3.1"
+pkgrel=0
+pkgdesc="Setup and support scripts for Tenstorrent hardware"
+url="https://github.com/tenstorrent/tt-system-tools"
+arch="noarch"
+license="Apache-2.0"
+depends="pciutils bash"
+makedepends=""
+install="$pkgname.pre-deinstall"
+source="
+	"$pkgname"-v"$pkgver".tar.gz::https://github.com/rekudyu/tt-system-tools/archive/refs/tags/v"$pkgver".tar.gz
+	"
+builddir="$srcdir/"
+options="!check"
+
+package() {
+    install -Dm 755 "$srcdir"/tt-system-tools-"$pkgver"/hugepages-setup/tenstorrent-hugepages-openrc  "$pkgdir"/etc/init.d/tenstorrent-hugepages
+    install -Dm 755 "$srcdir"/tt-system-tools-"$pkgver"/hugepages-setup/tenstorrent-mount-hugepages-openrc "$pkgdir"/etc/init.d/tenstorrent-mount-hugepages
+    install -Dm 755 "$srcdir"/tt-system-tools-"$pkgver"/tt-oops/tt-oops.sh "$pkgdir"/usr/bin/tt-oops
+    install -Dm 755 "$srcdir"/tt-system-tools-"$pkgver"/hugepages-setup/hugepages-setup.sh "$pkgdir"/usr/bin/hugepages-setup
+}
+sha512sums="
+cd9d58f11190e778298b7ec0c453d7eed52118dce8b5afdf7c3bc8cc946d9fae646c9fea22c0712f2922508918d8cc19713dcb57732bdb19e643787fdf859313  tt-system-tools-v1.3.1.tar.gz
+"
