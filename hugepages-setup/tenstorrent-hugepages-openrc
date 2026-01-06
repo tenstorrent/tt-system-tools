@@ -1,0 +1,17 @@
+#!/sbin/openrc-run
+
+name="tenstorrent-hugepages"
+description="Script that configures hugepages for Tenstorrent ASICs"
+command="/usr/bin/hugepages-setup"
+command_user="root"
+
+depend() {
+    before sysinit
+    use logger
+}
+
+start() {
+    ebegin "Configuring hugepages for Tenstorrent ASICs"
+    start-stop-daemon --start --exec "$command" --user "$command_user"
+    eend $?
+}
