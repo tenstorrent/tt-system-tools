@@ -30,3 +30,7 @@ If you need to override the default number of hugepages, create a text file at `
 - Root privileges for the initial setup
 - hugetlbfs kernel support
 - pciutils package installed
+
+## Usage
+
+See https://docs.tenstorrent.com/getting-started/manual-software-install.html#step-4-set-up-hugepages .
