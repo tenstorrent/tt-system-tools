@@ -60,21 +60,56 @@ fi
 # hugepages.
 NODES=${!nodes[*]}
 
+# Overridable so the allocation logic can be exercised against a fixture
+# instead of the live system.
+SYSFS_ROOT="${SYSFS_ROOT:-/sys}"
+
+# How many pages we added, per node, so a re-run reconciles instead of
+# stacking. /run is tmpfs and is cleared on boot, which is exactly when
+# nr_hugepages resets too, so the marker and the kernel state expire together.
+STATE_DIR="${STATE_DIR:-/run/tenstorrent}"
+
 # First, make sure we have the hugepages configured and available.
 for n in $NODES ; do
-    NODEDIR="/sys/devices/system/node/node${n}"
+    NODEDIR="${SYSFS_ROOT}/devices/system/node/node${n}"
     [ -d "${NODEDIR}" ] || error_out "Can't locate numa node directory at $NODEDIR. Check setup."
     HUGEPAGE_DIR="${NODEDIR}/hugepages/hugepages-1048576kB"
     [ -d "${HUGEPAGE_DIR}" ] || error_out "Can't locate 1GB hugepage settings at ${HUGEPAGE_DIR}. Check setup."
 
     NR_HP="$(cat "${HUGEPAGE_DIR}/nr_hugepages")"
+
+    # Whatever is already allocated belongs to something else - a VM backed by
+    # 1G pages, for instance - so add our requirement on top rather than
+    # replacing it. Subtract what we added ourselves earlier this boot so that
+    # running the script twice converges instead of growing.
+    STATE_FILE="${STATE_DIR}/hugepages-added-node${n}"
+    PREV_ADDED=0
+    if [ -f "${STATE_FILE}" ] ; then
+        PREV_ADDED="$(cat "${STATE_FILE}")"
+        [[ "${PREV_ADDED}" =~ ^[0-9]+$ ]] || PREV_ADDED=0
+    fi
+
+    BASELINE=$((NR_HP - PREV_ADDED))
+    # Guard against the count having been lowered behind our back.
+    [ "${BASELINE}" -lt 0 ] && BASELINE=0
+
+    TARGET=$((BASELINE + nodes[$n]))
+
     echo "Node ${n} hugepages before: ${NR_HP}"
     echo "Node ${n} hugepages needed: ${nodes[$n]}"
-    echo "${nodes[$n]}" > "${HUGEPAGE_DIR}/nr_hugepages" || error_out "Can't write to hugepages file at ${HUGEPAGE_DIR}/nr_hugepages"
+    echo "Node ${n} hugepages already in use by others: ${BASELINE}"
+    echo "Node ${n} hugepages target: ${TARGET}"
+
+    echo "${TARGET}" > "${HUGEPAGE_DIR}/nr_hugepages" || error_out "Can't write to hugepages file at ${HUGEPAGE_DIR}/nr_hugepages"
     NR_HP="$(cat "${HUGEPAGE_DIR}/nr_hugepages")"
     echo "Node ${n} hugepages after: ${NR_HP}"
-    if [ "${NR_HP}" != "${nodes[$n]}" ] ; then
-        error_out "Failed to get requested ${nodes[$n]} hugepages, only got ${NR_HP}"
+    if [ "${NR_HP}" != "${TARGET}" ] ; then
+        error_out "Failed to get requested ${TARGET} hugepages, only got ${NR_HP}"
+    fi
+
+    # Record our contribution only once the kernel has honoured it.
+    if mkdir -p "${STATE_DIR}" 2>/dev/null ; then
+        echo "${nodes[$n]}" > "${STATE_FILE}" || true
     fi
 done
 
