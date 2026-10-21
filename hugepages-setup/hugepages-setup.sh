@@ -47,11 +47,18 @@ if [[ -f "$file_path" ]]; then
         get_node_pages "${TT_VID}:${GS_PID}" "$HP_COUNT"
     )
 else
+    WH_COUNT=$(lspci -d "${TT_VID}:${WH_PID}" | wc -l)
+    # WH 6U Galaxy systems have 32 Wormhole ASICs and require 32 x 1GB hugepages (1 per ASIC)
+    if [[ "$WH_COUNT" -eq 32 ]]; then
+        WH_MULT=1
+    else
+        WH_MULT=4
+    fi
     while read -r index value ; do
         nodes[$index]=$((nodes[$index] + value))
     done < <(
         get_node_pages "${TT_VID}:${BH_PID}" 4
-        get_node_pages "${TT_VID}:${WH_PID}" 4
+        get_node_pages "${TT_VID}:${WH_PID}" "$WH_MULT"
         get_node_pages "${TT_VID}:${GS_PID}" 1
     )
 fi
