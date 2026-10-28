@@ -60,19 +60,41 @@ fi
 # hugepages.
 NODES=${!nodes[*]}
 
+# Kernels built without CONFIG_NUMA -- common on embedded arm64 and riscv64 SoCs -- expose no
+# /sys/devices/system/node hierarchy at all. Such a system has a single memory node, so total
+# up every card's request and drive the global hugepage control instead of a per-node one.
+if [ -d /sys/devices/system/node ] ; then
+    NUMA_SYSFS=true
+else
+    NUMA_SYSFS=false
+    total=0
+    for n in $NODES ; do
+        total=$((total + nodes[$n]))
+    done
+    unset nodes
+    declare -A nodes=([0]="${total}")
+    NODES=0
+fi
+
 # First, make sure we have the hugepages configured and available.
 for n in $NODES ; do
-    NODEDIR="/sys/devices/system/node/node${n}"
-    [ -d "${NODEDIR}" ] || error_out "Can't locate numa node directory at $NODEDIR. Check setup."
-    HUGEPAGE_DIR="${NODEDIR}/hugepages/hugepages-1048576kB"
+    if $NUMA_SYSFS ; then
+        NODEDIR="/sys/devices/system/node/node${n}"
+        [ -d "${NODEDIR}" ] || error_out "Can't locate numa node directory at $NODEDIR. Check setup."
+        HUGEPAGE_DIR="${NODEDIR}/hugepages/hugepages-1048576kB"
+        LABEL="Node ${n}"
+    else
+        HUGEPAGE_DIR="/sys/kernel/mm/hugepages/hugepages-1048576kB"
+        LABEL="System"
+    fi
     [ -d "${HUGEPAGE_DIR}" ] || error_out "Can't locate 1GB hugepage settings at ${HUGEPAGE_DIR}. Check setup."
 
     NR_HP="$(cat "${HUGEPAGE_DIR}/nr_hugepages")"
-    echo "Node ${n} hugepages before: ${NR_HP}"
-    echo "Node ${n} hugepages needed: ${nodes[$n]}"
+    echo "${LABEL} hugepages before: ${NR_HP}"
+    echo "${LABEL} hugepages needed: ${nodes[$n]}"
     echo "${nodes[$n]}" > "${HUGEPAGE_DIR}/nr_hugepages" || error_out "Can't write to hugepages file at ${HUGEPAGE_DIR}/nr_hugepages"
     NR_HP="$(cat "${HUGEPAGE_DIR}/nr_hugepages")"
-    echo "Node ${n} hugepages after: ${NR_HP}"
+    echo "${LABEL} hugepages after: ${NR_HP}"
     if [ "${NR_HP}" != "${nodes[$n]}" ] ; then
         error_out "Failed to get requested ${nodes[$n]} hugepages, only got ${NR_HP}"
     fi
